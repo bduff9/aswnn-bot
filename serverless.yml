@@ -1,0 +1,117 @@
+service: aswnn-bot
+
+package:
+  individually: true
+
+plugins:
+  - serverless-plugin-typescript
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: nodejs10.x
+  stage: ${opt:stage, 'dev'}
+  timeout: 5
+  memorySize: 128
+  environment:
+    BOT_TOKEN: ${ssm:/aswnn-bot/token}
+    DONUT_TABLE: ${self:custom.donutTableName}
+    POINT_TABLE: ${self:custom.pointTableName}
+    VERIFICATION_TOKEN: ${ssm:/aswnn-bot/verification_token}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["DonutsDynamoDbTable", "Arn"] }
+        - { "Fn::GetAtt": ["PointsDynamoDbTable", "Arn"] }
+        - Fn::Join:
+            - "/"
+            - - { "Fn::GetAtt": ["DonutsDynamoDbTable", "Arn"] }
+              - "index/*"
+        - Fn::Join:
+            - "/"
+            - - { "Fn::GetAtt": ["PointsDynamoDbTable", "Arn"] }
+              - "index/*"
+
+functions:
+  commandHandler:
+    handler: lambda.commandHandler
+    description: Handles all incoming Slack slash commands
+    exclude:
+      - package-lock.json
+      - __tests__
+    events:
+      - http:
+          path: command-handler
+          method: post
+
+  eventHandler:
+    handler: lambda.eventHandler
+    description: Handles all incoming Slack events
+    exclude:
+      - package-lock.json
+      - __tests__
+    events:
+      - http:
+          path: event-handler
+          method: post
+
+  reminderHandler:
+    handler: lambda.reminderHandler
+    description: Handles weekly donut reminder
+    exclude:
+      - package-lock.json
+      - __tests__
+    events:
+      - schedule: cron(0 20 ? * THU *)
+
+custom:
+  donutTableName: DonutHistory
+  pointTableName: UserPointTracker
+
+resources:
+  Resources:
+    DonutsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: userID
+            AttributeType: S
+          - AttributeName: dateOfInfraction
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: dateOfInfraction
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: userID
+            KeySchema:
+              - AttributeName: userID
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.donutTableName}
+
+    PointsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.pointTableName}

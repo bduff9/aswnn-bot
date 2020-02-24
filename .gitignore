@@ -1,0 +1,43 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# coverage
+/coverage
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# production
+/build
+
+# WebStorm
+.idea/
+
+# VS Code
+settings.json
+
+# Secrets
+secrets.json
+.env.yml
+.env
+
+# Serverless directories
+.serverless
+.build/
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+setup.sh
+
+# vim swap
+*.sw*

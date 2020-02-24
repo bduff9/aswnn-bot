@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"esModuleInterop": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"outDir": ".build",
+		"preserveConstEnums": true,
+		"resolveJsonModule": true,
+		"rootDir": "./",
+		"sourceMap": true,
+		"target": "es6"
+	},
+	"exclude": [
+		"node_modules"
+	],
+	"include": [
+		"**/*.js",
+		"**/*.ts"
+	]
+}

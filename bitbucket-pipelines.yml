@@ -1,0 +1,34 @@
+image: node:10.15.3
+
+definitions:
+  steps:
+    - step: &TestCode
+        name: Test code
+        caches:
+          - node
+        script:
+          - npm install
+          - npm run lint
+          - npm run test:coverage
+    - step: &DeployCode
+        name: Deploy code
+        caches:
+          - node
+        script:
+          - npm install
+          - npm install -g serverless
+          - echo "Deploying serverless to $STAGE_ENV"
+          - serverless deploy --stage $STAGE_ENV
+
+pipelines:
+  branches:
+    master:
+      - step:
+          <<: *TestCode
+      - step:
+          <<: *DeployCode
+          deployment: production
+
+  default:
+    - step:
+        <<: *TestCode
